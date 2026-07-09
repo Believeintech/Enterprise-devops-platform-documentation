@@ -313,3 +313,108 @@ All pipeline stages operate on files inside the workspace.
 ### Interview Note
 
 Jenkins does not execute builds directly from GitHub. Source code is first downloaded into the Jenkins workspace, and all subsequent operations are performed locally within that workspace.
+
+## Pipeline as Code Implementation
+
+### Objective
+
+Move Jenkins pipeline definitions from the Jenkins UI to source control.
+
+### Previous Approach
+
+Pipeline script was maintained directly inside the Jenkins job configuration.
+
+Challenges:
+
+* Not version controlled
+* Difficult to track changes
+* Hard to review
+* Not reusable
+
+### New Approach
+
+Pipeline definition stored in GitHub using:
+
+jenkins/Jenkinsfile
+
+Jenkins configured with:
+
+* Pipeline Script from SCM
+* SCM: Git
+* Branch: main
+* Script Path: jenkins/Jenkinsfile
+
+### Result
+
+Jenkins now loads and executes the pipeline directly from GitHub.
+
+### Benefits
+
+* Version Control
+* Auditability
+* Easier Collaboration
+* Pull Request Reviews
+* Infrastructure and CI/CD as Code
+
+### Troubleshooting
+
+Issue:
+
+Jenkins could not locate the pipeline script.
+
+Root Cause:
+
+File was saved as:
+
+Jenkinsfile.txt
+
+instead of:
+
+Jenkinsfile
+
+Resolution:
+
+Created a file without extension and updated Script Path accordingly.
+
+### Learning
+
+Special files such as:
+
+* Jenkinsfile
+* Dockerfile
+* .gitignore
+
+typically do not use file extensions.
+
+## GitHub Webhooks
+
+### Purpose
+
+Trigger Jenkins builds automatically whenever code is pushed to GitHub.
+
+### Flow
+
+Developer
+↓
+Git Push
+↓
+GitHub
+↓
+Webhook
+↓
+Jenkins
+↓
+Pipeline Execution
+
+### Benefits
+
+* Event-driven architecture
+* Faster feedback
+* Reduced server load
+* Better scalability
+
+### Interview Note
+
+Webhooks are preferred over SCM polling because Jenkins does not need to continuously query GitHub for changes. GitHub notifies Jenkins only when an event occurs.
+
+### webhook test
