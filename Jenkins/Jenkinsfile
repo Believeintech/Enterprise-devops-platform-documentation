@@ -1,10 +1,54 @@
 pipeline {
+
     agent any
 
     stages {
+
         stage('Checkout') {
             steps {
-                echo 'Checkout'
+                echo 'Checking out source code...'
+            }
+        }
+
+        stage('Lint') {
+            steps {
+                echo 'Running code quality checks...'
+            }
+        }
+
+        stage('Unit Test') {
+            steps {
+                echo 'Running unit tests...'
+            }
+        }
+
+        stage('Build') {
+            steps {
+                echo 'Building application...'
+            }
+        }
+
+        stage('Security Scan') {
+            steps {
+                echo 'Running security scans...'
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
+                echo 'Building Docker image...'
+            }
+        }
+
+        stage('Push Image') {
+            steps {
+                echo 'Pushing image to registry...'
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                echo 'Deploying application...'
             }
         }
     }
