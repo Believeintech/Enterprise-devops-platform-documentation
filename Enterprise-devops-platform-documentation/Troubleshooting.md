@@ -1,407 +1,774 @@
-# 11_Troubleshooting_Guide.md
+# Troubleshooting Guide
 
-# DevOps Project Troubleshooting Guide
+# Purpose
 
-This document contains all major issues encountered during the implementation of the Online Boutique Enterprise DevOps Platform and their resolutions.
+This document captures all major issues encountered during implementation of the DevOps platform project and the corresponding resolutions.
+
+The objective is to:
+
+* Build troubleshooting skills
+* Create interview preparation material
+* Maintain future operational reference
 
 ---
 
-# Issue 1: Unable to Access Jenkins After EC2 Restart
+# Troubleshooting Methodology
+
+Whenever an issue occurs:
+
+```text
+Observe Problem
+      ↓
+Collect Logs
+      ↓
+Identify Root Cause
+      ↓
+Implement Fix
+      ↓
+Validate Resolution
+      ↓
+Document Learning
+```
+
+---
+
+# Jenkins Issues
+
+# Issue 1
+
+Unable To Login To Jenkins
 
 ## Symptoms
 
-Jenkins UI became inaccessible after EC2 reboot.
+```text
+Invalid Username or Password
+```
+
+after changing Jenkins credentials.
+
+---
 
 ## Root Cause
 
-Jenkins container was not running.
-
-## Verification
-
-docker ps -a
-
-## Resolution
-
-docker start jenkins
-
-## Prevention
-
-Configure restart policy:
-
-docker update --restart=always jenkins
+Password was changed and not documented.
 
 ---
 
-# Issue 2: SonarQube Not Accessible After EC2 Restart
+## Investigation
+
+Checked Jenkins configuration.
+
+Verified:
+
+```text
+config.xml
+```
+
+and user entries.
+
+---
+
+## Resolution
+
+Retrieved Jenkins credentials from:
+
+```text
+JENKINS_HOME
+```
+
+and reset authentication.
+
+---
+
+## Learning
+
+Always document:
+
+* Jenkins Admin Username
+* Jenkins Admin Password
+* Credential IDs
+
+---
+
+# Issue 2
+
+GitHub Authentication Failure
 
 ## Symptoms
 
-Browser could not access SonarQube on port 9000.
+```text
+Authentication Failed
+```
+
+during Git push.
+
+---
 
 ## Root Cause
 
-SonarQube container was stopped after reboot.
-
-## Verification
-
-docker ps -a
-
-## Resolution
-
-docker start sonarqube
-
-## Prevention
-
-docker update --restart=always sonarqube
+GitHub password authentication deprecated.
 
 ---
 
-# Issue 3: Jenkins Could Not Connect To Minikube Cluster
-
-## Symptoms
-
-kubectl commands failed.
-
-Error:
-
-couldn't get current server API group list
-
-connect: no route to host
-
-## Root Cause
-
-Copied kubeconfig referenced old Minikube IP address.
-
 ## Resolution
 
-Recreated Minikube configuration and updated kubeconfig.
+Created:
+
+```text
+GitHub Personal Access Token (PAT)
+```
+
+Configured Jenkins credential.
 
 ---
 
-# Issue 4: SCP File Transfer Failed
+## Learning
 
-## Symptoms
-
-Unable to copy kubeconfig and Minikube files.
-
-## Error
-
-Host key verification failed
-
-scp: Connection closed
-
-## Root Cause
-
-Remote host fingerprint was not trusted.
-
-## Resolution
-
-Accepted host fingerprint.
-
-ssh ubuntu@server-ip
-
-Answered:
-
-yes
+Use PAT instead of passwords.
 
 ---
 
-# Issue 5: SSH Authentication Failed
+# SonarQube Issues
+
+# Issue 3
+
+Quality Gate Timeout
 
 ## Symptoms
 
-SSH login failed.
+Pipeline stuck at:
 
-## Error
-
-ssh: unable to authenticate
-
-attempted methods [none publickey]
-
-## Root Cause
-
-SSH public key was missing.
-
-## Resolution
-
-Generate SSH key:
-
-ssh-keygen
-
-Copy public key:
-
-ssh-copy-id ubuntu@server-ip
+```text
+waitForQualityGate
+```
 
 ---
-
-# Issue 6: Jenkins SSH Agent Error
-
-## Symptoms
-
-Pipeline failed.
-
-## Error
-
-No such DSL method 'sshagent'
-
-## Root Cause
-
-SSH Agent Plugin not installed.
-
-## Resolution
-
-Install Jenkins SSH Agent Plugin.
-
-Restart Jenkins.
-
----
-
-# Issue 7: ImagePullBackOff
-
-## Symptoms
-
-Pods failed to start.
-
-## Error
-
-ImagePullBackOff
-
-## Root Cause
-
-Incorrect image repository or image tag.
-
-## Resolution
-
-Verify image exists:
-
-docker pull image-name
-
-Update deployment with correct image.
-
----
-
-# Issue 8: SonarQube Quality Gate Timeout
-
-## Symptoms
-
-Pipeline waited indefinitely.
-
-## Error
-
-SonarQube task status is PENDING
-
-Cancelling nested steps due to timeout
 
 ## Root Cause
 
 Webhook not configured.
 
-## Resolution
-
-Configure SonarQube webhook:
-
-http://jenkins-server:8080/sonarqube-webhook/
+Jenkins waited indefinitely for Quality Gate response.
 
 ---
 
-# Issue 9: SonarQube Analysis Failure
+## Resolution
+
+Configured SonarQube Webhook:
+
+```text
+Administration
+   ↓
+Configuration
+   ↓
+Webhooks
+```
+
+URL:
+
+```text
+http://jenkins-server/sonarqube-webhook/
+```
+
+---
+
+## Learning
+
+Quality Gates require webhooks.
+
+---
+
+# Issue 4
+
+SonarQube Not Reachable
 
 ## Symptoms
 
-Analysis failed.
+```text
+Unable to connect to SonarQube
+```
 
-## Error
-
-Your project contains .java files, please provide compiled classes
+---
 
 ## Root Cause
 
-SonarScanner expected Java binaries.
-
-## Resolution
-
-Exclude Java source directories or provide compiled binaries.
+Incorrect server URL.
 
 ---
 
-# Issue 10: Trivy Image Not Found
+## Resolution
+
+Updated Jenkins SonarQube configuration.
+
+---
+
+# Docker Issues
+
+# Issue 5
+
+Docker Push Failed
 
 ## Symptoms
 
-Trivy scan failed.
+```text
+denied: requested access to the resource
+```
 
-## Error
+---
 
+## Root Cause
+
+Incorrect DockerHub credentials.
+
+---
+
+## Resolution
+
+Updated Jenkins DockerHub credentials.
+
+---
+
+## Learning
+
+Validate credentials before pipeline execution.
+
+---
+
+# Issue 6
+
+Docker Image Not Found
+
+## Symptoms
+
+```text
 No such image
-
-manifest unknown
-
-## Root Cause
-
-Pipeline referenced old image names.
-
-## Resolution
-
-Align image naming convention across:
-
-Build
-Scan
-Push
-Deploy
+```
 
 ---
 
-# Issue 11: Helm Installation Failed
-
-## Symptoms
-
-Helm install failed.
-
-## Error
-
-ServiceAccount already exists and cannot be imported
-
 ## Root Cause
 
-Resources were originally created using kubectl.
+Incorrect image tag.
 
-Helm could not assume ownership.
+Example:
 
-## Resolution
+```text
+frontend:39
+```
 
-Remove old resources and deploy using Helm.
+did not exist.
 
 ---
 
-# Issue 12: Helm Chart Repository Mapping
-
-## Symptoms
-
-Helm deployed Google sample images.
-
-## Root Cause
-
-values.yaml pointed to Google Artifact Registry.
-
 ## Resolution
 
-Modified values.yaml:
+Validated image tags:
 
-images:
-repository: rajesh984
+```bash
+docker images
+```
 
 ---
 
-# Issue 13: Helm Chart Using Wrong Image Names
+## Learning
 
-## Symptoms
-
-Helm generated:
-
-rajesh984/frontend
-
-Pipeline produced:
-
-rajesh984/onlineboutique-frontend
-
-## Root Cause
-
-Naming mismatch.
-
-## Resolution
-
-Standardized image names:
-
-frontend
-cartservice
-productcatalogservice
-currencyservice
-checkoutservice
-emailservice
-paymentservice
-recommendationservice
-shippingservice
-adservice
+Always verify image existence before scanning.
 
 ---
 
-# Issue 14: Helm Packaging Error
+# Trivy Issues
+
+# Issue 7
+
+Trivy Image Scan Failed
 
 ## Symptoms
 
-Helm upgrade failed.
+```text
+MANIFEST_UNKNOWN
+```
 
-## Error
+---
 
+## Root Cause
+
+Image not pushed successfully.
+
+---
+
+## Resolution
+
+Verified Docker Push stage.
+
+Validated image in DockerHub.
+
+---
+
+## Learning
+
+Trivy requires valid image availability.
+
+---
+
+# Issue 8
+
+Container Runtime Errors
+
+## Symptoms
+
+```text
+containerd permission denied
+```
+
+---
+
+## Root Cause
+
+Trivy attempted alternative runtimes.
+
+---
+
+## Resolution
+
+Used Docker runtime.
+
+---
+
+# Kubernetes Issues
+
+# Issue 9
+
+Pod CrashLoopBackOff
+
+## Symptoms
+
+```text
+CrashLoopBackOff
+```
+
+---
+
+## Investigation
+
+```bash
+kubectl logs pod-name
+kubectl describe pod pod-name
+```
+
+---
+
+## Resolution
+
+Corrected application startup configuration.
+
+---
+
+## Learning
+
+Always inspect logs before modifying deployment.
+
+---
+
+# Issue 10
+
+Service Not Reachable
+
+## Symptoms
+
+Application inaccessible.
+
+---
+
+## Investigation
+
+```bash
+kubectl get svc
+```
+
+---
+
+## Root Cause
+
+Incorrect service configuration.
+
+---
+
+## Resolution
+
+Updated service definition.
+
+---
+
+# Helm Issues
+
+# Issue 11
+
+Helm Not Installed
+
+## Symptoms
+
+```text
+helm: command not found
+```
+
+---
+
+## Resolution
+
+Installed Helm.
+
+Verified:
+
+```bash
+helm version
+```
+
+---
+
+# Issue 12
+
+Existing Resource Conflict
+
+## Symptoms
+
+```text
+ServiceAccount exists and cannot be imported
+```
+
+---
+
+## Root Cause
+
+Resources already existed in cluster.
+
+---
+
+## Resolution
+
+Deleted conflicting resources.
+
+Reinstalled chart.
+
+---
+
+## Learning
+
+Check for existing resources before installation.
+
+---
+
+# Issue 13
+
+Large Pack File Error
+
+## Symptoms
+
+```text
 chart file larger than maximum file size
-
-## Root Cause
-
-Helm executed from repository root and included .git pack files.
-
-## Resolution
-
-Run Helm from chart directory only.
+```
 
 ---
 
-# Issue 15: Shell Script Command Not Found
+## Root Cause
+
+Git pack files accidentally included.
+
+---
+
+## Resolution
+
+Removed unnecessary files.
+
+---
+
+# Prometheus Issues
+
+# Issue 14
+
+Prometheus UI Not Accessible
 
 ## Symptoms
 
-Pipeline failed.
-
-## Error
-
-rajesh984/cartservice:40: not found
-
-## Root Cause
-
-Image name accidentally executed as shell command.
-
-## Resolution
-
-Ensure every image reference is prefixed with:
-
-docker push
-
-or
-
-trivy image
+Port forwarding unsuccessful.
 
 ---
 
-# Issue 16: Minikube SSH Authentication Failure
+## Investigation
+
+Verified service:
+
+```bash
+kubectl get svc -n monitoring
+```
+
+---
+
+## Resolution
+
+Used:
+
+```bash
+kubectl port-forward --address 0.0.0.0 \
+svc/prometheus-server 9090:80
+```
+
+---
+
+## Learning
+
+Verify service names before forwarding.
+
+---
+
+# Grafana Issues
+
+# Issue 15
+
+Grafana Chart Not Found
 
 ## Symptoms
 
-Minikube status command failed.
-
-## Error
-
-ssh handshake failed
-
-unable to authenticate
-
-## Root Cause
-
-Copied Minikube configuration contained invalid SSH keys.
-
-## Resolution
-
-Recreated Minikube installation and regenerated configuration.
+```text
+chart matching not found
+```
 
 ---
 
-# Lessons Learned
+## Root Cause
 
-1. Always use consistent image naming conventions.
-2. Use restart policies for infrastructure containers.
-3. Configure SonarQube webhooks immediately after installation.
-4. Verify Docker images exist before deployment.
-5. Use Helm instead of manual kubectl deployments.
-6. Store Kubernetes access configuration securely.
-7. Validate SSH connectivity before pipeline deployment.
-8. Standardize CI/CD stages across all services.
-9. Maintain deployment documentation continuously.
-10. Troubleshooting experience is as valuable as successful deployments.
+Repository index outdated.
+
+---
+
+## Resolution
+
+Executed:
+
+```bash
+helm repo update
+```
+
+---
+
+# Issue 16
+
+No Metrics Visible
+
+## Symptoms
+
+Grafana dashboards empty.
+
+---
+
+## Root Cause
+
+Prometheus datasource not configured.
+
+---
+
+## Resolution
+
+Added datasource:
+
+```text
+http://prometheus-server.monitoring.svc.cluster.local
+```
+
+---
+
+# ArgoCD Issues
+
+# Issue 17
+
+Your Connection Is Not Private
+
+## Symptoms
+
+Browser security warning.
+
+---
+
+## Root Cause
+
+Self-signed certificate.
+
+---
+
+## Resolution
+
+Accepted certificate.
+
+Used only for lab environment.
+
+---
+
+# Issue 18
+
+Port 8080 Already In Use
+
+## Symptoms
+
+```text
+address already in use
+```
+
+---
+
+## Root Cause
+
+Port occupied.
+
+---
+
+## Resolution
+
+Used alternative port or terminated process.
+
+---
+
+# Issue 19
+
+Application Progressing State
+
+## Symptoms
+
+```text
+Synced
+Progressing
+```
+
+---
+
+## Root Cause
+
+Pods still becoming healthy.
+
+---
+
+## Resolution
+
+Verified:
+
+```bash
+kubectl get pods
+```
+
+Waited for readiness.
+
+---
+
+# GitOps Issues
+
+# Issue 20
+
+ArgoCD Not Updating Deployment
+
+## Symptoms
+
+New image not deployed.
+
+---
+
+## Root Cause
+
+values.yaml not updated correctly.
+
+---
+
+## Resolution
+
+Validated Jenkins update stage.
+
+Confirmed:
+
+```yaml
+tag: "41"
+```
+
+committed successfully.
+
+---
+
+# Diagnostic Commands
+
+## Kubernetes
+
+```bash
+kubectl get pods
+kubectl get svc
+kubectl get deployments
+kubectl describe pod
+kubectl logs
+kubectl get events
+```
+
+---
+
+## Docker
+
+```bash
+docker ps
+docker images
+docker logs
+```
+
+---
+
+## Helm
+
+```bash
+helm list
+helm status
+helm upgrade
+helm uninstall
+```
+
+---
+
+## Jenkins
+
+```bash
+docker logs jenkins
+```
+
+---
+
+## SonarQube
+
+```bash
+docker logs sonarqube
+```
+
+---
+
+# Interview Questions
+
+## Tell Me About A Production Issue You Resolved
+
+Use any documented issue:
+
+* Quality Gate Timeout
+* Docker Push Failure
+* Trivy Scan Failure
+* ArgoCD Sync Issue
+
+Explain:
+
+```text
+Problem
+Root Cause
+Investigation
+Resolution
+Learning
+```
+
+---
+
+# Key Learnings
+
+* Troubleshooting starts with evidence collection.
+* Logs are the primary source of truth.
+* Most failures originate from configuration mistakes.
+* Understanding tool interactions is critical.
+* Documentation accelerates future resolution.
+* Real troubleshooting experience is highly valued in DevOps interviews.
